@@ -114,8 +114,8 @@ const App = () => {
             <QRCodeSVG
               value={qrValue}
               style={{ 
-                width: "auto", 
-                height: "auto", 
+                width: "80%", 
+                height: "80%", 
                 maxWidth: "100%", 
                 maxHeight: "100%"
               }}
