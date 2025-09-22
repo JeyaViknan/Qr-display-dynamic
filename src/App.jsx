@@ -92,7 +92,7 @@ const App = () => {
       <div
         style={{
           width: '80vmin',
-          height: '80vh',
+          height: '80vmin', // make container square
           maxWidth: '90vw',
           margin: '0 auto',
           border: '8px solid white',
@@ -104,10 +104,18 @@ const App = () => {
         }}
       >
         {showQR ? (
-          <div style={{ width: "100%", height: "100%" }}>
+          <div
+            style={{
+              width: '80%',   // inner QR/image size
+              height: '80%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <QRCodeSVG
               value={qrValue}
-              style={{ width: "100%", height: "100%" }}
+              style={{ width: '100%', height: '100%' }}
               includeMargin={false}
             />
           </div>
@@ -116,10 +124,10 @@ const App = () => {
             src={images[currentIndex]}
             alt="cycling"
             style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              borderRadius: "0px",
+              width: '80%',
+              height: '80%',
+              objectFit: 'cover',
+              borderRadius: '0px',
             }}
           />
         )}
