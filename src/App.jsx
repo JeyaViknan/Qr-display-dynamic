@@ -6,29 +6,22 @@ const imageCount = 5;
 const images = Array.from({ length: imageCount }, (_, i) => `/images/${i + 1}.jpg`);
 const interval = 500; // 2 images/sec
 
-// Helper function to get today's date in "originalDDMMYYYY" format
-const getQRValue = () => {
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-  const yyyy = today.getFullYear();
-  return `https://forms.gle/C5zCvUyDEZF42Rpc8${dd}${mm}${yyyy}`;
-};
-
 const App = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showQR, setShowQR] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [running, setRunning] = useState(false);
+  const [qrValue, setQrValue] = useState(""); // store QR once per run
 
   const timerRef = useRef(null);
   const imageIntervalRef = useRef(null);
-  const qrTimeoutRef = useRef(null);
+  const qrTimeoutRefs = useRef([]); // store multiple timeouts
 
   const stopAll = () => {
     clearInterval(timerRef.current);
     clearInterval(imageIntervalRef.current);
-    clearTimeout(qrTimeoutRef.current);
+    qrTimeoutRefs.current.forEach((t) => clearTimeout(t));
+    qrTimeoutRefs.current = [];
     setRunning(false);
     setShowQR(false);
   };
@@ -36,27 +29,56 @@ const App = () => {
   const startSequence = () => {
     stopAll();
 
+    // generate QR value once (based on current time)
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    setQrValue(`jeycavbhakanadiyaz${hh}${mm}`);
+
     setRunning(true);
     setElapsedTime(0);
     setCurrentIndex(0);
 
+    // cycle images
     imageIntervalRef.current = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
     }, interval);
 
+    // elapsed time
     timerRef.current = setInterval(() => {
       setElapsedTime((prev) => {
         const newTime = prev + 1;
-        if (newTime >= 20) stopAll();
+        if (newTime >= 30) stopAll(); // stop after 30s
         return newTime;
       });
     }, 1000);
 
-    const qrDelay = Math.floor(Math.random() * 10000) + 5000;
-    qrTimeoutRef.current = setTimeout(() => {
-      setShowQR(true);
-      setTimeout(() => setShowQR(false), 500);
-    }, qrDelay);
+    // Schedule 3 QR flashes
+    const flashCount = 3;
+    const minDelay = 3000;  // 3s
+    const maxDelay = 27000; // 27s
+    const minGap = 3000;    // at least 3s apart
+
+    const delays = [];
+
+    while (delays.length < flashCount) {
+      const candidate = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+
+      // check gap with previously chosen times
+      if (delays.every((t) => Math.abs(t - candidate) >= minGap)) {
+        delays.push(candidate);
+      }
+    }
+
+    delays.sort((a, b) => a - b);
+
+    delays.forEach((delay) => {
+      const timeoutId = setTimeout(() => {
+        setShowQR(true);
+        setTimeout(() => setShowQR(false), 500); // show for 0.5s
+      }, delay);
+      qrTimeoutRefs.current.push(timeoutId);
+    });
   };
 
   useEffect(() => {
@@ -82,16 +104,22 @@ const App = () => {
         }}
       >
         {showQR ? (
-          <QRCodeSVG value={getQRValue()} size="100%" includeMargin={false} />
+          <div style={{ width: "100%", height: "100%" }}>
+            <QRCodeSVG
+              value={qrValue}
+              style={{ width: "100%", height: "100%" }}
+              includeMargin={false}
+            />
+          </div>
         ) : (
           <img
             src={images[currentIndex]}
             alt="cycling"
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              borderRadius: '0px',
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              borderRadius: "0px",
             }}
           />
         )}
